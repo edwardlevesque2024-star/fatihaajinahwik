@@ -1,16 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { auth } from './services/firebase';
 import { Layout } from './components/Layout';
+import { Login } from './components/Login';
 import { GeneratorForm } from './components/GeneratorForm';
 import { ImageResult } from './components/ImageResult';
 import { GeneratorSettings, GeneratedImage } from './types';
 import { generateJournalPrompts } from './services/gemini';
 import { generatePollinationsImage } from './services/pollinations';
-import { Info } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPromptBatch, setCurrentPromptBatch] = useState<string[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
+  };
 
   const handleGenerate = async (settings: GeneratorSettings) => {
     setIsGenerating(true);
@@ -67,8 +88,20 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
-    <Layout>
+    <Layout user={user} onLogout={handleLogout}>
       <div className="flex flex-col md:flex-row gap-8 p-6 md:p-8 h-full">
         
         {/* Left Panel: Controls */}
