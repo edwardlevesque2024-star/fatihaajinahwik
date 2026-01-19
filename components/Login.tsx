@@ -24,7 +24,9 @@ export const Login: React.FC = () => {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
       console.error("Login failed", err);
-      setError("Unable to sign in with Google. Please try again.");
+      // Display the actual error message to help with debugging (e.g. Unauthorized domain)
+      const errorMessage = err.message?.replace('Firebase: ', '') || "Unable to sign in with Google.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +50,7 @@ export const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Auth failed", err);
-      let msg = "Authentication failed. Please check your credentials.";
+      let msg = err.message?.replace('Firebase: ', '') || "Authentication failed.";
       
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
         msg = "Invalid email or password.";

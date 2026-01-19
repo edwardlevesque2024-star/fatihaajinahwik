@@ -16,6 +16,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Configure Google Provider with the specific Client ID provided
+// This can help if there are configuration mismatches, though usually handled by firebaseConfig
+googleProvider.setCustomParameters({
+  client_id: '23200069244-dc6amororvpnmtr9n7cphh8qj8gnovvn.apps.googleusercontent.com',
+  prompt: 'select_account'
+});
+
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
 let analytics;
 
 // Analytics only works in browser environments
