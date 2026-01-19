@@ -25,6 +25,11 @@ export const generatePollinationsImage = async (prompt: string, seed: number): P
     });
 
     if (!response.ok) {
+      // Log specific help if authentication fails
+      if (response.status === 401 || response.status === 403) {
+        console.error("Pollinations Auth Error: Please check if your API Key is valid and has credits.");
+      }
+      
       const errorText = await response.text();
       throw new Error(`Pollinations API Error (${response.status}): ${errorText}`);
     }
@@ -37,7 +42,6 @@ export const generatePollinationsImage = async (prompt: string, seed: number): P
   } catch (error) {
     console.error("Pollinations generation failed:", error);
     // If the authenticated fetch fails, we return null or throw to let the UI show an error state
-    // rather than falling back to the rate-limited public URL.
     throw error;
   }
 };
