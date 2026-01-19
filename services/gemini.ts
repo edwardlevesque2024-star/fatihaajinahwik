@@ -2,12 +2,19 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratorSettings } from "../types";
 import { SYSTEM_INSTRUCTION_PROMPT_GEN } from "../constants";
 
-// Initialize Gemini client
-// Note: API Key must be in process.env.API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const generateJournalPrompts = async (settings: GeneratorSettings): Promise<string[]> => {
   try {
+    // Initialize Gemini client inside the function to prevent top-level crashes
+    // if the API key is missing or empty during module evaluation.
+    const apiKey = process.env.API_KEY;
+    
+    // If no key is present, throw immediately to trigger the fallback in the catch block
+    if (!apiKey) {
+      throw new Error("API Key is missing or empty in process.env.API_KEY");
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+
     const prompt = `
       Topic: ${settings.topic}
       Style: ${settings.style}
@@ -47,7 +54,7 @@ export const generateJournalPrompts = async (settings: GeneratorSettings): Promi
     }
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini API Error (using fallback):", error);
     // Fallback if API fails or key is missing
     return Array(settings.count).fill(`${settings.topic} junk journal page, ${settings.style} style, intricate details, scrapbooking paper texture, high resolution`);
   }
