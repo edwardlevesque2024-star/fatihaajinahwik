@@ -16,12 +16,39 @@ export const GeneratorForm: React.FC<GeneratorFormProps> = ({ onGenerate, isGene
   const [style, setStyle] = useState<JournalStyle>(JournalStyle.VINTAGE);
   const [count, setCount] = useState('2');
 
+  const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow empty string for better typing experience
+    if (e.target.value === '') {
+      setCount('');
+      return;
+    }
+    
+    let value = parseInt(e.target.value);
+    if (isNaN(value)) return;
+
+    if (value > 50) value = 50;
+    
+    setCount(value.toString());
+  };
+
+  const handleBlur = () => {
+    // Reset to 1 if empty or invalid on blur
+    if (!count || parseInt(count) < 1) {
+      setCount('1');
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    let numCount = parseInt(count) || 1;
+    // Ensure bounds
+    if (numCount < 1) numCount = 1;
+    if (numCount > 50) numCount = 50;
+
     onGenerate({
       topic,
       style,
-      count: parseInt(count),
+      count: numCount,
       enhancePrompts: true
     });
   };
@@ -52,15 +79,15 @@ export const GeneratorForm: React.FC<GeneratorFormProps> = ({ onGenerate, isGene
             onChange={(e) => setStyle(e.target.value as JournalStyle)}
             options={DEFAULT_STYLES.map(s => ({ label: s, value: s }))}
           />
-          <Select 
-            label="Number of Pages"
+          <Input 
+            label="Number of Pages (Max 50)"
+            type="number"
+            min="1"
+            max="50"
             value={count}
-            onChange={(e) => setCount(e.target.value)}
-            options={[
-              { label: '1 Page', value: '1' },
-              { label: '2 Pages', value: '2' },
-              { label: '4 Pages', value: '4' }
-            ]}
+            onChange={handleCountChange}
+            onBlur={handleBlur}
+            required
           />
         </div>
       </div>

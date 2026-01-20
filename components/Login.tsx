@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { 
-  signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
-import { auth, googleProvider } from '../services/firebase';
-import { BookOpen, Sparkles, Mail, Lock, AlertCircle } from 'lucide-react';
+import { auth } from '../services/firebase';
+import { BookOpen, Mail, Lock, AlertCircle } from 'lucide-react';
 import { Button } from './Button';
 import { Input } from './Input';
 
@@ -16,21 +15,6 @@ export const Login: React.FC = () => {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err: any) {
-      console.error("Login failed", err);
-      // Display the actual error message to help with debugging (e.g. Unauthorized domain)
-      const errorMessage = err.message?.replace('Firebase: ', '') || "Unable to sign in with Google.";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +34,7 @@ export const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Auth failed", err);
-      let msg = err.message?.replace('Firebase: ', '') || "Authentication failed.";
+      let msg = "Authentication failed. Please check your credentials.";
       
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
         msg = "Invalid email or password.";
@@ -84,27 +68,6 @@ export const Login: React.FC = () => {
             <p className="text-sm text-stone-500">
               Professional Junk Journaling Platform
             </p>
-          </div>
-
-          {/* Social Auth */}
-          <Button 
-            onClick={handleGoogleLogin}
-            isLoading={isLoading}
-            variant="outline"
-            className="w-full h-11 text-stone-700 bg-white hover:bg-stone-50 border-stone-300"
-            type="button"
-            icon={<Sparkles className="w-4 h-4 text-amber-600" />}
-          >
-            Continue with Google
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-stone-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-stone-400">Or continue with email</span>
-            </div>
           </div>
 
           {/* Email Form */}
