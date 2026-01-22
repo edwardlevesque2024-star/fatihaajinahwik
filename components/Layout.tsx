@@ -1,14 +1,11 @@
 import React from 'react';
-import { BookOpen, Layers, Settings, Image as ImageIcon, LogOut, User as UserIcon } from 'lucide-react';
-import { User } from 'firebase/auth';
+import { BookOpen, Layers, Settings, Image as ImageIcon } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
-  user: User | null;
-  onLogout: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex h-screen bg-stone-50 text-stone-900">
       {/* Sidebar */}
@@ -36,36 +33,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
           </a>
         </nav>
 
-        <div className="p-4 border-t border-stone-100 space-y-4">
+        <div className="p-4 border-t border-stone-100">
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-100">
             <h4 className="text-sm font-semibold text-amber-900 mb-1">Pro Plan Active</h4>
             <p className="text-xs text-amber-700">Unlimited generations with Pollinations API.</p>
           </div>
-
-          {user && (
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center space-x-2 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full" />
-                  ) : (
-                    <UserIcon className="w-4 h-4 text-stone-500" />
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium text-stone-900 truncate">{user.displayName || 'User'}</span>
-                  <span className="text-xs text-stone-500 truncate">{user.email}</span>
-                </div>
-              </div>
-              <button 
-                onClick={onLogout}
-                className="text-stone-400 hover:text-red-600 transition-colors"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          )}
         </div>
       </aside>
 

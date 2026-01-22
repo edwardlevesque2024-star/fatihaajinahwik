@@ -5,9 +5,10 @@ import { GeneratedImage } from '../types';
 interface ImageResultProps {
   image: GeneratedImage;
   onDownload: (image: GeneratedImage) => void;
+  onRetry?: (image: GeneratedImage) => void;
 }
 
-export const ImageResult: React.FC<ImageResultProps> = ({ image, onDownload }) => {
+export const ImageResult: React.FC<ImageResultProps> = ({ image, onDownload, onRetry }) => {
   return (
     <div className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-stone-200 shadow-md ring-1 ring-stone-900/5 transition-all hover:shadow-xl">
       {image.status === 'loading' && (
@@ -52,7 +53,15 @@ export const ImageResult: React.FC<ImageResultProps> = ({ image, onDownload }) =
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-100 text-red-500 p-4 text-center">
            <RefreshCw className="w-8 h-8 mb-2" />
            <p className="text-sm font-medium">Generation Failed</p>
-           <p className="text-xs text-stone-500 mt-1">Try again later</p>
+           {onRetry && (
+             <button 
+               onClick={() => onRetry(image)}
+               className="mt-3 flex items-center px-3 py-1.5 bg-white text-stone-700 text-xs font-medium rounded border border-stone-200 shadow-sm hover:bg-stone-50 hover:text-stone-900 transition-colors"
+             >
+               <RefreshCw className="w-3 h-3 mr-1.5" />
+               Retry
+             </button>
+           )}
         </div>
       )}
     </div>

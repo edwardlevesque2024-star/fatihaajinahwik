@@ -1,37 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { auth } from './services/firebase';
+import React, { useState } from 'react';
 import { Layout } from './components/Layout';
-import { Login } from './components/Login';
 import { GeneratorForm } from './components/GeneratorForm';
 import { ImageResult } from './components/ImageResult';
 import { GeneratorSettings, GeneratedImage } from './types';
 import { generateJournalPrompts } from './services/gemini';
 import { generatePollinationsImage } from './services/pollinations';
-import { Info, Loader2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPromptBatch, setCurrentPromptBatch] = useState<string[]>([]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out", error);
-    }
-  };
 
   const handleGenerate = async (settings: GeneratorSettings) => {
     setIsGenerating(true);
@@ -79,6 +58,30 @@ export default function App() {
     }
   };
 
+  const handleRetry = async (image: GeneratedImage) => {
+    // 1. Update status to loading
+    setImages(prev => prev.map(img => 
+      img.id === image.id ? { ...img, status: 'loading' } : img
+    ));
+
+    try {
+      // 2. Retry generation with a new seed
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = await generatePollinationsImage(image.prompt, seed);
+      
+      // 3. Update on success
+      setImages(prev => prev.map(img => 
+        img.id === image.id ? { ...img, url, status: 'success' } : img
+      ));
+    } catch (error) {
+      // 4. Update on error
+      console.error(`Retry failed for image ${image.id}`, error);
+      setImages(prev => prev.map(img => 
+        img.id === image.id ? { ...img, status: 'error' } : img
+      ));
+    }
+  };
+
   const handleDownload = (image: GeneratedImage) => {
     const link = document.createElement('a');
     link.href = image.url;
@@ -88,20 +91,8 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Login />;
-  }
-
   return (
-    <Layout user={user} onLogout={handleLogout}>
+    <Layout>
       <div className="flex flex-col md:flex-row gap-8 p-6 md:p-8 h-full">
         
         {/* Left Panel: Controls */}
@@ -136,10 +127,14 @@ export default function App() {
                <p className="text-sm mt-1">Generated pages will appear here</p>
              </div>
            ) : (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6 pb-20">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
                {images.map((img) => (
                  <div key={img.id} className="flex flex-col gap-2">
-                    <ImageResult image={img} onDownload={handleDownload} />
+                    <ImageResult 
+                      image={img} 
+                      onDownload={handleDownload} 
+                      onRetry={handleRetry}
+                    />
                     {img.status === 'success' && (
                       <p className="text-xs text-stone-500 line-clamp-2 px-1">
                         <span className="font-semibold text-stone-700">Prompt:</span> {img.prompt}

@@ -17,38 +17,41 @@ export const GeneratorForm: React.FC<GeneratorFormProps> = ({ onGenerate, isGene
   const [count, setCount] = useState('2');
 
   const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
     // Allow empty string for better typing experience
-    if (e.target.value === '') {
+    if (val === '') {
       setCount('');
       return;
     }
     
-    let value = parseInt(e.target.value);
-    if (isNaN(value)) return;
-
-    if (value > 50) value = 50;
-    
-    setCount(value.toString());
+    // Parse and clamp
+    const num = parseInt(val);
+    if (!isNaN(num)) {
+      if (num > 50) {
+        setCount('50');
+      } else {
+        setCount(val);
+      }
+    }
   };
 
   const handleBlur = () => {
-    // Reset to 1 if empty or invalid on blur
-    if (!count || parseInt(count) < 1) {
+    const num = parseInt(count);
+    if (!count || isNaN(num) || num < 1) {
       setCount('1');
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let numCount = parseInt(count) || 1;
-    // Ensure bounds
-    if (numCount < 1) numCount = 1;
-    if (numCount > 50) numCount = 50;
+    let num = parseInt(count);
+    if (isNaN(num) || num < 1) num = 1;
+    if (num > 50) num = 50;
 
     onGenerate({
       topic,
       style,
-      count: numCount,
+      count: num,
       enhancePrompts: true
     });
   };
@@ -99,7 +102,7 @@ export const GeneratorForm: React.FC<GeneratorFormProps> = ({ onGenerate, isGene
           isLoading={isGenerating}
           icon={<Sparkles className="w-4 h-4" />}
         >
-          {isGenerating ? 'Designing Pages...' : 'Generate Journal Pages'}
+          {isGenerating ? 'Designing Pages...' : 'Generate Bulk Pages'}
         </Button>
       </div>
     </form>
