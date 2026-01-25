@@ -5,11 +5,14 @@ import { ImageResult } from './components/ImageResult';
 import { GeneratorSettings, GeneratedImage } from './types';
 import { generateJournalPrompts } from './services/gemini';
 import { generatePollinationsImage } from './services/pollinations';
-import { Info } from 'lucide-react';
+import { Info, Download, Archive } from 'lucide-react';
+import { Button } from './components/Button';
+import JSZip from 'jszip';
 
 export default function App() {
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [currentPromptBatch, setCurrentPromptBatch] = useState<string[]>([]);
 
   const handleGenerate = async (settings: GeneratorSettings) => {
@@ -91,6 +94,49 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  const handleDownloadAll = async () => {
+    const successImages = images.filter(img => img.status === 'success');
+    if (successImages.length === 0) return;
+
+    setIsDownloadingAll(true);
+    try {
+      const zip = new JSZip();
+      
+      // Use map to create an array of promises
+      const promises = successImages.map(async (img, index) => {
+        // Since img.url is a local blob URL (from Pollinations service), fetching it is fast and cheap
+        const response = await fetch(img.url);
+        const blob = await response.blob();
+        
+        // Sanitize filename or use ID
+        const filename = `journal-page-${img.id}.jpg`;
+        zip.file(filename, blob);
+      });
+
+      await Promise.all(promises);
+
+      // Generate the zip file
+      const content = await zip.generateAsync({ type: "blob" });
+      
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = `journal-gen-collection-${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+    } catch (error) {
+      console.error("Failed to zip images:", error);
+      alert("Failed to create zip file. Please try downloading images individually.");
+    } finally {
+      setIsDownloadingAll(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="flex flex-col md:flex-row gap-8 p-6 md:p-8 h-full">
@@ -117,7 +163,27 @@ export default function App() {
         </div>
 
         {/* Right Panel: Results */}
-        <div className="flex-1 min-h-[500px]">
+        <div className="flex-1 min-h-[500px] flex flex-col">
+           {images.length > 0 && (
+             <div className="flex justify-between items-center mb-6 pb-2 border-b border-stone-200">
+               <h3 className="font-serif text-xl text-stone-800">
+                 Results <span className="text-stone-400 text-base ml-1">({images.filter(i => i.status === 'success').length})</span>
+               </h3>
+               
+               {images.some(i => i.status === 'success') && (
+                 <Button 
+                   variant="outline" 
+                   onClick={handleDownloadAll} 
+                   isLoading={isDownloadingAll}
+                   icon={<Archive className="w-4 h-4" />}
+                   className="text-sm h-9"
+                 >
+                   Download ZIP
+                 </Button>
+               )}
+             </div>
+           )}
+
            {images.length === 0 && !isGenerating ? (
              <div className="h-full border-2 border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center text-stone-400">
                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">

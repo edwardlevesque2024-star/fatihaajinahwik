@@ -15,13 +15,20 @@ export const generateJournalPrompts = async (settings: GeneratorSettings): Promi
 
     const ai = new GoogleGenAI({ apiKey });
 
+    // We explicitly instruct Gemini to combine the user's topic with the specific visual style
+    // seen in the reference images (Watercolor + Ink + Vintage Paper Backgrounds).
     const prompt = `
-      Topic: ${settings.topic}
-      Style: ${settings.style}
-      Number of Prompts: ${settings.count}
+      Target Topic: "${settings.topic}"
+      Target Aesthetic: "${settings.style}"
+      Quantity: ${settings.count}
       
-      Generate ${settings.count} distinct, highly detailed prompts for generating a junk journal page image.
-      Each prompt should describe a full page layout with specific elements related to the topic and style.
+      Create ${settings.count} distinct image generation prompts.
+      
+      CRITICAL VISUAL REQUIREMENTS FOR EVERY PROMPT:
+      - The main subject (${settings.topic}) must be depicted in a "watercolor and ink illustration" style.
+      - The background MUST be described as "vintage textured paper", "old maps", or "handwritten script".
+      - Include "collage elements" like stamps, butterflies, or flowers surrounding the subject.
+      - End every prompt with: "shabby chic, high definition, 8k, intricate details, flat lay composition".
     `;
 
     const response = await ai.models.generateContent({
@@ -36,7 +43,7 @@ export const generateJournalPrompts = async (settings: GeneratorSettings): Promi
             type: Type.STRING
           }
         },
-        temperature: 0.7,
+        temperature: 0.75, // Slightly higher for more creative variety
       }
     });
 
@@ -49,13 +56,13 @@ export const generateJournalPrompts = async (settings: GeneratorSettings): Promi
       return prompts;
     } catch (e) {
       console.error("Failed to parse Gemini JSON response", e);
-      // Fallback: simple split if JSON fails (unlikely with responseSchema)
-      return [settings.topic + " junk journal page, vintage style, high quality"];
+      // Fallback
+      return [`Watercolor and ink illustration of ${settings.topic}, vintage map background, junk journal style, detailed`];
     }
 
   } catch (error) {
     console.error("Gemini API Error (using fallback):", error);
-    // Fallback if API fails or key is missing
-    return Array(settings.count).fill(`${settings.topic} junk journal page, ${settings.style} style, intricate details, scrapbooking paper texture, high resolution`);
+    // Enhanced Fallback to match the requested style even without AI
+    return Array(settings.count).fill(`Watercolor and ink illustration of ${settings.topic}, on background of old handwritten letters and vintage maps, ${settings.style} style, shabby chic, butterflies and stamps, high resolution, 8k`);
   }
 };
