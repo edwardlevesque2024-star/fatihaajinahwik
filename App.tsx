@@ -5,7 +5,7 @@ import { ImageResult } from './components/ImageResult';
 import { GeneratorSettings, GeneratedImage } from './types';
 import { generateJournalPrompts } from './services/gemini';
 import { generatePollinationsImage } from './services/pollinations';
-import { Info, Download, Archive } from 'lucide-react';
+import { Info, Archive } from 'lucide-react';
 import { Button } from './components/Button';
 import JSZip from 'jszip';
 
@@ -81,6 +81,29 @@ export default function App() {
       console.error(`Retry failed for image ${image.id}`, error);
       setImages(prev => prev.map(img => 
         img.id === image.id ? { ...img, status: 'error' } : img
+      ));
+    }
+  };
+
+  const handleUpdatePrompt = async (id: string, newPrompt: string) => {
+    // 1. Update prompt in state and set to loading
+    setImages(prev => prev.map(img => 
+      img.id === id ? { ...img, status: 'loading', prompt: newPrompt } : img
+    ));
+
+    try {
+      // 2. Regenerate with new prompt and new seed
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = await generatePollinationsImage(newPrompt, seed);
+      
+      // 3. Update on success
+      setImages(prev => prev.map(img => 
+        img.id === id ? { ...img, url, status: 'success' } : img
+      ));
+    } catch (error) {
+      console.error(`Regeneration failed for image ${id}`, error);
+      setImages(prev => prev.map(img => 
+        img.id === id ? { ...img, status: 'error' } : img
       ));
     }
   };
@@ -200,12 +223,8 @@ export default function App() {
                       image={img} 
                       onDownload={handleDownload} 
                       onRetry={handleRetry}
+                      onUpdatePrompt={handleUpdatePrompt}
                     />
-                    {img.status === 'success' && (
-                      <p className="text-xs text-stone-500 line-clamp-2 px-1">
-                        <span className="font-semibold text-stone-700">Prompt:</span> {img.prompt}
-                      </p>
-                    )}
                  </div>
                ))}
              </div>
