@@ -1,6 +1,6 @@
 import { JournalStyle } from "./types";
 
-export const POLLINATIONS_API_KEY = 'pk_B9sNLPlFqBcCv7zS';
+export const POLLINATIONS_API_KEY = 'sk_VJ9upICWKFRA3ve7oeQ1kzxQk1hACgeH';
 
 export const DEFAULT_STYLES: JournalStyle[] = [
   JournalStyle.VINTAGE,
